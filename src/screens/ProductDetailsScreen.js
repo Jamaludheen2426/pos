@@ -28,7 +28,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   }, []);
 
   const fetchProductDetails = async () => {
-    try {
+    try { 
       setLoading(true);
       if (!initialProduct?.id) {
         Alert.alert('Error', 'Product ID not found');
