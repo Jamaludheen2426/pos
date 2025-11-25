@@ -1,36 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { getProductById, getProductVariants } from '../utils/api';
+import { useCart } from '../context/CartContext';
 
 const ProductDetailsScreen = ({ route, navigation }) => {
-  const { product } = route.params || {
-    product: {
-      id: 1,
-      name: 'Lush Stride Comfort Walker Shoes',
-      price: 79.99,
-      image: '👟',
-      productId: '#PRD892',
-      stock: 24,
-      description:
-        'The Lush Stride Comfort Walker Shoes combine superior cushioning, breathable materials, and an ergonomic design to keep your feet comfortable and supported all day.',
-    },
+  const { product: initialProduct } = route.params || {};
+  const [product, setProduct] = useState(initialProduct);
+  const [variants, setVariants] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const { addToCart, getAvailableStock } = useCart();
+
+  useEffect(() => {
+    fetchProductDetails();
+  }, []);
+
+  const fetchProductDetails = async () => {
+    try {
+      setLoading(true);
+      if (!initialProduct?.id) {
+        Alert.alert('Error', 'Product ID not found');
+        navigation.goBack();
+        return;
+      }
+
+      const productData = await getProductById(initialProduct.id);
+      setProduct(productData);
+
+      if (productData.has_variants && productData.variants) {
+        setVariants(productData.variants || []);
+        if (productData.variants.length > 0) {
+          setSelectedVariant(productData.variants[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      Alert.alert('Error', 'Failed to load product details');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const [selectedSize, setSelectedSize] = useState(36);
-  const [quantity, setQuantity] = useState(1);
+  const getCurrentStock = () => {
+    return getAvailableStock(product, selectedVariant);
+  };
 
-  const sizes = [36, 37, 38, 39, 40, 41, 42, 43, 44];
+  const getCurrentPrice = () => {
+    if (product?.has_variants && selectedVariant) {
+      return selectedVariant.price?.price || 0;
+    }
+    return product?.price || 0;
+  };
 
   const incrementQuantity = () => {
-    if (quantity < product.stock) {
+    const stock = getCurrentStock();
+    if (quantity < stock) {
       setQuantity(quantity + 1);
     }
   };
@@ -41,53 +77,123 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     }
   };
 
+  const handleAddToCart = () => {
+    if (product?.has_variants && selectedVariant) {
+      const itemToAdd = {
+        ...selectedVariant,
+        product_id: product.id, 
+        variant_id: selectedVariant.id,  
+        name: product.name,
+        product_name: product.name,
+      };
+      addToCart(itemToAdd, quantity);
+      Alert.alert('Success', `Added ${quantity} ${product.name} to cart`);
+    } else if (product) {
+      addToCart(product, quantity);
+      Alert.alert('Success', `Added ${quantity} ${product.name} to cart`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header
+          title="Product Details"
+          showBack={true}
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4DB8AC" />
+          <Text style={styles.loadingText}>Loading product...</Text>
+        </View>
+        <BottomNav navigation={navigation} activeRoute="Products" />
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.container}>
+        <Header
+          title="Product Details"
+          showBack={true}
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={styles.errorContainer}>
+          <Icon name="alert-circle" size={64} color="#ccc" />
+          <Text style={styles.errorText}>Product not found</Text>
+        </View>
+        <BottomNav navigation={navigation} activeRoute="Products" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header
         title="Product Details"
         showBack={true}
         onBackPress={() => navigation.goBack()}
-        rightText={product.productId}
-        showHelp={true}
-        showSearch={true}
+        rightText={product?.sku ? String(product.sku) : (product?.id ? `#${String(product.id)}` : '')}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Product Image */}
         <View style={styles.imageContainer}>
-          <Text style={styles.productImage}>{product.image}</Text>
+          <Text style={styles.productImage}>{String(product.image || '📦')}</Text>
         </View>
 
         {/* Product Info */}
         <View style={styles.infoContainer}>
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productName}>{String(product.name || 'Unnamed Product')}</Text>
+          <Text style={styles.productPrice}>₹{String(parseFloat(getCurrentPrice() || 0).toFixed(2))}</Text>
 
-          <Text style={styles.descriptionLabel}>Product Description</Text>
-          <Text style={styles.description}>{product.description}</Text>
+          {product.description && String(product.description).trim() !== '' && (
+            <>
+              <Text style={styles.descriptionLabel}>Product Description</Text>
+              <Text style={styles.description}>{String(product.description)}</Text>
+            </>
+          )}
 
-          {/* Select Size */}
-          <Text style={styles.sectionLabel}>Select Size</Text>
-          <View style={styles.sizesContainer}>
-            {sizes.map((size) => (
-              <TouchableOpacity
-                key={size}
-                style={[
-                  styles.sizeChip,
-                  selectedSize === size && styles.sizeChipActive,
-                ]}
-                onPress={() => setSelectedSize(size)}
-              >
-                <Text
-                  style={[
-                    styles.sizeText,
-                    selectedSize === size && styles.sizeTextActive,
-                  ]}
-                >
-                  {size}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* Variants Selection */}
+          {Boolean(product.has_variants) && variants.length > 0 && (
+            <>
+              <Text style={styles.sectionLabel}>Select Variant</Text>
+              <View style={styles.sizesContainer}>
+                {variants.map((variant) => (
+                  <TouchableOpacity
+                    key={variant.id}
+                    style={[
+                      styles.sizeChip,
+                      selectedVariant?.id === variant.id && styles.sizeChipActive,
+                    ]}
+                    onPress={() => setSelectedVariant(variant)}
+                  >
+                    <Text
+                      style={[
+                        styles.sizeText,
+                        selectedVariant?.id === variant.id && styles.sizeTextActive,
+                      ]}
+                    >
+                      {(() => {
+                        const attrs = variant?.attributes || {};
+                        const display = [attrs.size, attrs.color].filter(Boolean).join(' ');
+                        return display || 'Variant';
+                      })()}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.variantPrice,
+                        selectedVariant?.id === variant.id && styles.variantPriceActive,
+                      ]}
+                    >
+                      ₹{String(parseFloat(variant.price?.price || 0).toFixed(2))}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* Quantity */}
           <View style={styles.quantityContainer}>
@@ -95,7 +201,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
               <Text style={styles.quantityLabel}>Quantity</Text>
             </View>
             <View style={styles.stockContainer}>
-              <Text style={styles.stockText}>Stock : {product.stock}</Text>
+              <Text style={styles.stockText}>Stock: {String(getCurrentStock())}</Text>
             </View>
           </View>
 
@@ -107,7 +213,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
               <Text style={styles.quantityButtonText}>−</Text>
             </TouchableOpacity>
             <View style={styles.quantityDisplay}>
-              <Text style={styles.quantityText}>{quantity}</Text>
+              <Text style={styles.quantityText}>{String(quantity)}</Text>
             </View>
             <TouchableOpacity
               style={[styles.quantityButton, styles.incrementButton]}
@@ -117,14 +223,14 @@ const ProductDetailsScreen = ({ route, navigation }) => {
                 +
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.addToCartButton}>
-              <Text style={styles.addToCartText}>🛒 Add to Cart</Text>
+            <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+              <Text style={styles.addToCartText}> Add to Cart</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      <BottomNav navigation={navigation} activeRoute="ProductDetails" />
+      <BottomNav navigation={navigation} activeRoute="Products" />
     </View>
   );
 };
@@ -153,7 +259,41 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    marginBottom: 10,
+  },
+  productPrice: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4DB8AC',
     marginBottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 18,
+    color: '#999',
+  },
+  variantPrice: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 2,
+  },
+  variantPriceActive: {
+    color: '#fff',
   },
   descriptionLabel: {
     fontSize: 14,

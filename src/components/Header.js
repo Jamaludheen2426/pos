@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -20,6 +21,9 @@ const Header = ({
   showMenu = false,
   showHelp = false,
   showSearch = false,
+  rightIcon = null,
+  onRightIconPress = null,
+  showBackButton = true,
 }) => {
   return (
     // only apply safe inset on the top; no manual paddingTop
@@ -33,7 +37,7 @@ const Header = ({
 
       <View style={styles.header}>
         <View style={styles.leftSection}>
-          {showBack && (
+          {showBackButton && showBack ? (
             <TouchableOpacity
               onPress={onBackPress}
               style={styles.backButton}
@@ -41,6 +45,12 @@ const Header = ({
             >
               <Icon name="chevron-left" size={22} color="#1a1a1a" />
             </TouchableOpacity>
+          ) : !showBackButton ? null : (
+            <Image
+              source={{ uri: 'https://res.cloudinary.com/demo/image/upload/w_200,h_200,c_fill/sample_logo.png' }}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           )}
         </View>
 
@@ -53,6 +63,16 @@ const Header = ({
         <View style={styles.rightSection}>
           {rightText ? <Text style={styles.rightText}>{rightText}</Text> : null}
 
+          {rightIcon && (
+            <TouchableOpacity
+              style={styles.iconButton}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              onPress={onRightIconPress}
+            >
+              <Icon name={rightIcon} size={20} color="#1a1a1a" />
+            </TouchableOpacity>
+          )}
+
           {showHelp && (
             <TouchableOpacity style={styles.iconButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
               <Icon name="help-circle" size={18} color="#666" />
@@ -62,12 +82,6 @@ const Header = ({
           {showSearch && (
             <TouchableOpacity style={styles.iconButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
               <Icon name="search" size={18} color="#666" />
-            </TouchableOpacity>
-          )}
-
-          {showNotification && (
-            <TouchableOpacity style={styles.iconButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-              <Icon name="bell" size={20} color="#1a1a1a" />
             </TouchableOpacity>
           )}
 
@@ -105,7 +119,7 @@ const styles = StyleSheet.create({
 
   centerSection: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
   },
 
@@ -135,6 +149,12 @@ const styles = StyleSheet.create({
   iconButton: {
     paddingHorizontal: 6,
     paddingVertical: 6,
+  },
+
+  logo: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
   },
 });
 

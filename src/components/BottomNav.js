@@ -20,8 +20,26 @@ const BottomNav = ({ navigation, activeRoute = 'Products' }) => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem}>
-          <Icon name="heart" size={22} color="#999" />
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('ProductList')}
+        >
+          <Icon
+            name="package"
+            size={22}
+            color={activeRoute === 'ProductList' ? '#4DB8AC' : '#999'}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('CategoryList')}
+        >
+          <Icon
+            name="folder"
+            size={22}
+            color={activeRoute === 'CategoryList' ? '#4DB8AC' : '#999'}
+          />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -35,12 +53,15 @@ const BottomNav = ({ navigation, activeRoute = 'Products' }) => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem}>
-          <Icon name="clock" size={22} color="#999" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem}>
-          <Icon name="settings" size={22} color="#999" />
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Order')}
+        >
+          <Icon
+            name="shopping-cart"
+            size={22}
+            color={activeRoute === 'Order' ? '#4DB8AC' : '#999'}
+          />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

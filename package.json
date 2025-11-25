@@ -1,5 +1,5 @@
 {
-  "name": "attendance",
+  "name": "pos",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -8,8 +8,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "apk": "cd android && ./gradlew assembleRelease",
-    "apk-fast": "cd android && ./gradlew assembleRelease --parallel --max-workers=2",
+    "apk": "cd android && gradlew.bat assembleRelease",
+    "apk-fast": "cd android && gradlew.bat assembleRelease --parallel --max-workers=2",
     "apk-debug-fast": "cd android && ./gradlew assembleDebug --parallel --max-workers=2",
     "apk-arm64": "cd android && ./gradlew assembleRelease -PsplitApkByAbi=true --parallel",
     "apk-ultra-fast": "cd android && ./gradlew assembleRelease --parallel --max-workers=2",
@@ -17,8 +17,8 @@
     "build:debug-clean": "cd android && ./gradlew clean && ./gradlew assembleDebug --parallel --max-workers=2",
     "apk-single-arch": "cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --parallel",
     "apk-debug-single": "cd android && ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a --parallel",
-    "copy-apk": "cp android/app/build/outputs/apk/release/app-release.apk ./attendance-release.apk",
-    "copy-debug-apk": "cp android/app/build/outputs/apk/debug/app-debug.apk ./attendance-debug.apk",
+    "copy-apk": "cp android/app/build/outputs/apk/release/app-release.apk ./pos-release.apk",
+    "copy-debug-apk": "cp android/app/build/outputs/apk/debug/app-debug.apk ./pos-debug.apk",
     "build-and-copy": "yarn apk-fast && yarn copy-apk",
     "debug-and-copy": "yarn apk-debug-fast && yarn copy-debug-apk",
     "warm-build": "cd android && ./gradlew assembleRelease --parallel --max-workers=2 && echo 'Build cache warmed up! Next builds will be faster.'",
